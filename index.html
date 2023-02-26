@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/ogw/AAEL6sjTDt5AFM1FvJ80n0KDgYtiWedeKK68Loh3QxKMtw=s32-c-mo" sizes="32x32">
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+            "three": "https://unpkg.com/three/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- GitHub https://github.com/takahirox/mmd-parser よりダウンロード -->
+    <script src="./js/mmdparser.js"></script>
+    <!-- GitHub https://github.com/kripken/ammo.js/tree/main/builds よりダウンロード -->
+    <script src="./js/ammo.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://rawgit.com/kimmobrunfeldt/progressbar.js/master/dist/progressbar.min.js"></script>
+    <title>MMD 3Dモデルの表示</title>
+    <style>
+        body {
+            margin: 0;
+            border: 0;
+            padding: 0;
+            position: relative;
+        }
+
+        canvas {
+            margin: 0 0 auto;
+        }
+
+        /*========= LoadingのためのCSS ===============*/
+
+        /* Loading背景画面設定　*/
+
+        #splash {
+            /*fixedで全面に固定*/
+            position: fixed;
+            z-index: 999;
+            width: 100%;
+            height: 100%;
+            background: #333;
+            text-align: center;
+            color: #fff;
+            display: none;
+        }
+
+        /* Loadingバー中央配置　*/
+        #splash_text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 999;
+            width: 100%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="splash">
+        <div id="splash_text"></div>
+    </div>
+    <!-- MMDが描画されるHTML要素 -->
+    <div id="webgl" style="height: 100vh;"></div>
+    <audio controlslist="nodownload" src="./BadApple.mp3" type="audio/mp3">badapple</audio>
+    <script type="module">
+        // three.jsが読み込めたかチェック
+        import * as THREE from 'three';
+        import { MMDToonShader } from 'three/addons/shaders/MMDToonShader.js';
+        import { TGALoader } from 'three/addons/loaders/TGALoader.js';
+        import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+        import { MMDLoader } from 'three/addons/loaders/MMDLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import Stats from 'three/addons/libs/stats.module.js';
+        import { CCDIKSolver } from 'three/addons/animation/CCDIKSolver.js';
+        import { MMDPhysics } from 'three/addons/animation/MMDPhysics.js';
+        import { MMDAnimationHelper } from 'three/addons/animation/MMDAnimationHelper.js';
+        //***********************************************************************************************
+        // 変数設定
+        //***********************************************************************************************
+        //3dmodel path
+        var modelpath = ["./3Dモデル/アルハイゼン/1/艾尔海森.pmx",
+            "./3Dモデル/アルベド/1/阿贝多.pmx",
+            "./3Dモデル/アンバー/1/安柏.pmx",
+            "./3Dモデル/ウェンティ/1/温迪.pmx",
+            "./3Dモデル/エウルア/1/优菈.pmx",
+            "./3Dモデル/ガイア/1/凯亚.pmx",
+            "./3Dモデル/キャンディス/1/坎蒂丝.pmx",
+            "./3Dモデル/クレー/1/可莉.pmx",
+            "./3Dモデル/コレイ/1/柯莱.pmx",
+            "./3Dモデル/ゴロー/1/五郎.pmx",
+            "./3Dモデル/ジン/1/琴.pmx",
+            "./3Dモデル/ジン/3/琴.pmx",
+            "./3Dモデル/スカラマシュ/1/流浪者.pmx",
+            "./3Dモデル/スクロース/1/砂糖.pmx",
+            "./3Dモデル/セノ/1/赛诺.pmx",
+            "./3Dモデル/タルタリヤ/1/达达利亚.pmx",
+            "./3Dモデル/ティナリ/1/提纳里.pmx",
+            "./3Dモデル/ディオナ/1/迪奥娜.pmx",
+            "./3Dモデル/ディルック/1/迪卢克.pmx",
+            "./3Dモデル/ディルック/2/迪卢克.pmx",
+            "./3Dモデル/トーマ/1/托马.pmx",
+            "./3Dモデル/ドリー/1/多莉.pmx",
+            "./3Dモデル/ナヒーダ/1/纳西妲.pmx",
+            "./3Dモデル/ニィロウ/1/妮露.pmx",
+            "./3Dモデル/ノエル/1/诺艾尔.pmx",
+            "./3Dモデル/バーバラ/1/芭芭拉.pmx",
+            "./3Dモデル/バーバラ/2/芭芭拉.pmx",
+            "./3Dモデル/パイモン/1/派蒙.pmx",
+            "./3Dモデル/ファルザン/1/珐露珊.pmx",
+            "./3Dモデル/フィッシュル/1/菲谢尔.pmx",
+            "./3Dモデル/フィッシュル/2/菲谢尔.pmx",
+            "./3Dモデル/ベネット/1/班尼特.pmx",
+            "./3Dモデル/モナ/1/莫娜.pmx",
+            "./3Dモデル/モナ/2/莫娜.pmx",
+            "./3Dモデル/ヨォーヨ/1/瑶瑶.pmx",
+            "./3Dモデル/リサ/1/丽莎.pmx",
+            "./3Dモデル/リサ/2/丽莎.pmx",
+            "./3Dモデル/レイラ/1/莱依拉.pmx",
+            "./3Dモデル/レザー/1/雷泽.pmx",
+            "./3Dモデル/ロサリア/1/罗莎莉亚.pmx",
+            "./3Dモデル/七七/1/七七.pmx",
+            "./3Dモデル/久岐忍/1/久岐忍.pmx",
+            "./3Dモデル/九条裟羅/1/九条裟罗.pmx",
+            "./3Dモデル/八重神子/1/八重神子.pmx",
+            "./3Dモデル/凝光/1/凝光.pmx",
+            "./3Dモデル/凝光/2/凝光.pmx",
+            "./3Dモデル/刻晴/1/刻晴.pmx",
+            "./3Dモデル/刻晴/2/刻晴.pmx",
+            "./3Dモデル/北斗/1/北斗.pmx",
+            "./3Dモデル/夜蘭/1/夜兰.pmx",
+            "./3Dモデル/宵宮/1/宵宫.pmx",
+            "./3Dモデル/敵mob/丘丘人/丘丘人.pmx",
+            "./3Dモデル/敵mob/奇怪的丘丘人/奇怪的丘丘人.pmx",
+            "./3Dモデル/早柚/1/早柚.pmx",
+            "./3Dモデル/楓原万葉/1/万叶.pmx",
+            "./3Dモデル/珊瑚宮心海/1/珊瑚宫心海.pmx",
+            "./3Dモデル/甘雨/1/甘雨.pmx",
+            "./3Dモデル/申鶴/1/申鹤.pmx",
+            "./3Dモデル/神里綾人/1/神里绫人.pmx",
+            "./3Dモデル/神里綾華/2/神里绫华.pmx",
+            "./3Dモデル/空/1/空.pmx",
+            "./3Dモデル/胡桃/1/胡桃.pmx",
+            "./3Dモデル/荒瀧一斗/1/荒泷一斗.pmx",
+            "./3Dモデル/蛍/1/蛍.pmx",
+            "./3Dモデル/行秋/1/行秋.pmx",
+            "./3Dモデル/辛炎/1/辛焱.pmx",
+            "./3Dモデル/重雲/1/重云.pmx",
+            "./3Dモデル/鍾離/1/钟离.pmx",
+            "./3Dモデル/雲菫/1/云堇.pmx",
+            "./3Dモデル/雷電将軍/1/雷电将军.pmx",
+            "./3Dモデル/香菱/1/香菱.pmx",
+            "./3Dモデル/魈/1/魈.pmx",
+            "./3Dモデル/鹿野院平蔵/1/鹿野院平藏.pmx"]
+
+        // MMD 3Dモデルのモーションに関連する変数
+        const ANIMATION_HELPER = new MMDAnimationHelper();
+        const CLOCK = new THREE.Clock();
+        let animationMixer = {};
+        let motions = [];
+        // モーションのインデックス、-1の時はモーションは適用されていないことを示す
+        let motionIndex = -1;
+        // ポーズのインデックス、-1の時はポーズは適用されていないことを示す
+        let poseIndex = -1;
+
+        // 読み込むモーションファイル(VMDファイル)をオブジェクトで管理する
+        const VMD_FILES = [
+            { name: 'walk', file: './motion/walk.vmd' },
+
+
+        ];
+        // レンダリングに関連する変数
+        let camera = {};
+        let controls = {};
+        let effect = {};
+        let light = {};
+        let mesh = {};
+        let renderer = {};
+        let scene = {};
+        var charactercenter;
+        // WebGLを表示するcanvas要素のサイズ
+        // レスポンシブル対応 div要素の幅を取得（960px）し、数値（960）のみを取り出す
+        let canvasSizeW = parseInt(window.getComputedStyle(document.getElementById('webgl')).height) * 3 / 4;
+        let canvasSizeH = parseInt(window.getComputedStyle(document.getElementById('webgl')).height);     //16:9の場合9/16　4:3の場合3/4
+        //***********************************************************************************************
+        // メインプログラム
+        //***********************************************************************************************
+
+        // DOMの解析が終わったらメインプログラムを実行
+        window.addEventListener('load', function () {
+            // Ammo の 「Ammo.btDefaultCollisionConfiguration is not a function」 のエラー回避
+            //https://stayawhile.site/2021/10/14/post0012/
+            Ammo().then(function (AmmoLib) {
+                Ammo = AmmoLib;
+                // (1) シーンの準備
+                prepareScene();
+                // (2) MMD 3Dモデルをロードし、シーンに追加
+                loadMMD();
+                // (3) レンダリング (レンダリングループ)
+                sceneRender();
+            });
+        }, false);
+        var timephysics = 5000;
+        window.onload = function () {
+            setTimeout(function () {
+                motionIndex = 0;
+                // モーションを停止する
+                //animationMixer.stopAllAction();
+                var temp = 0;
+                // (Method) .play () : AnimationAction
+                animationMixer.clipAction(motions[temp]).play();
+                // (Method) .setLoop ( loopMode : Number, repetitions : Number ) : AnimationAction
+                animationMixer.clipAction(motions[temp]).setLoop(THREE.Loop);
+                motionIndex = temp;
+                poseIndex = -1;
+            }, timephysics);
+        };
+        //-----------------------------------------------------------------------------------------------
+        // (1)シーンの準備
+        //-----------------------------------------------------------------------------------------------
+        function prepareScene() {
+            // レンダラーを作成
+            // (Constructor) WebGLRenderer( parameters : Object ) : Renederer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            // 解像度の設定
+            // (Method) .setPixelRatio ( value : number ) : null
+            renderer.setPixelRatio(window.devicePixelRatio);
+            // 描画サイズの設定
+            // (Method) .setSize ( width : Integer, height : Integer, updateStyle : Boolean ) : null
+            renderer.setSize(canvasSizeW, canvasSizeH);
+            // 背景の色と透明度の設定
+            // (Method) .setClearColor ( color : Color, alpha : Float ) : null
+            renderer.setClearColor(0xffffff, 1.0);
+            // シャドウマッピングの設定
+            // (Property) .shadowMap.enabled : Boolean
+            renderer.shadowMap.enabled = true;
+            // シャドウマッピングのタイプの指定
+            // (Property) .shadowMap.type : Integer
+            // THREE.BasicShadowMap、THREE.PCFShadowMap (default)、THREE.PCFSoftShadowMap、THREE.VSMShadowMapから選択
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.RGBEncoding;
+            // レンダラー出力先の HTML 要素の設定 (canvasは自動生成)
+            // (Property) .domElement : DOMElement
+            document.getElementById('webgl').appendChild(renderer.domElement);
+            // OutlineEffectの適用
+            // (Constructor) OutlineEffect( renderer, parameters : Object ) : Effect
+            effect = new OutlineEffect(renderer, { defaultThickness: 0.5, defaultColor: [255, 0, 0], defaultAlpha: 1 });//多分オプション機能してない
+            // シーンを作成
+            // (Constructor) Scene() : Object3D
+            scene = new THREE.Scene();
+            // ライト(環境光)を作成し、シーンに追加
+            // (Method) .add ( object : Object3D, ... ) : this
+            // (Constructor) AmbientLight( color : Integer, intensity : Float ) : Object3D -> Light
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            // ライト(平行光源)を作成
+            // (Constructor)  DirectionalLight( color : Integer, intensity : Float ) : Object3D -> Light
+            light = new THREE.DirectionalLight(0xffffff, 0.4);
+            // ライト(平行光源)による動的シャドウを描画の設定
+            // (Property) .castShadow : Boolean
+            light.castShadow = true;
+            // ライトの位置を設定
+            // (Property) .position : Vector3
+            // (Method) .copy ( v : Vector3 ) : this
+            light.position.copy(new THREE.Vector3(2, 4.7, 2));
+            // ライト(スポットライト光源)によるシャドウのマッピングのサイズ
+            // (Property) .shadow : SpotLightShadow
+            // (Property) .mapSize : Vector2
+            light.shadow.mapSize.copy(new THREE.Vector2(2 ** 10.5, 2 ** 10.5));
+            // ライト(スポットライト光源)によるシャドウの解像度
+            // (Property) .shadow : SpotLightShadow
+            // (Property) .focus : Number
+            light.shadow.focus = 1;
+            // Shadow Mapのoffsetバイアスの設定、Shadow Acneを減らすことができる。
+            // (Property) .normalBias : Float
+            light.shadow.normalBias = 0.02;
+            // Shadow Mapのバイアスの設定、影の中にできるArtefactsを減らすことができる。
+            // (Property) .bias : Float
+            light.shadow.bias = -0.0005;
+            // 平行光源の設定
+            // (Property) .shadow : SpotLightShadow
+            // (Property) .camera : Camera
+            // (Property) .left : Float
+            light.shadow.camera.left = -5;
+            // (Property) .right : Float
+            light.shadow.camera.right = 5;
+            // (Property) .top : Float
+            light.shadow.camera.top = 5;
+            // (Property) .bottom : Float
+            light.shadow.camera.bottom = -5;
+            // (Property) .near : Float
+            light.shadow.camera.near = 0.1;
+            // (Property) .far : Float
+            light.shadow.camera.far = 20;
+            // ライト(平行光源)をシーンに追加
+            // (Method) .add ( object : Object3D, ... ) : this
+            scene.add(light);
+            //light.target.position.copy( new THREE.Vector3( 0, 0, 0 ) );
+            // 平行光源のターゲットをシーンに追加
+            // (Method) .add ( object : Object3D, ... ) : this
+            scene.add(light.target);
+            // カメラを作成
+            // (Constructor) PerspectiveCamera( fov : Number, aspect : Number, near : Number, far : Number ) : Object3D -> Camera
+            // 画角を決める アスペクト比 16:9 における焦点距離(35 mm判相当)と垂直画角は以下の通り
+            // 24 mm = 45.75、 35 mm = 32.27、50 mm = 22.90
+            camera = new THREE.PerspectiveCamera(22.9, canvasSizeW / canvasSizeH, 0.1, 200);
+            // OrbitControls を使用するための設定
+            // (Constructor) OrbitControls( object : Camera, domElement : HTMLDOMElement ) : Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            // 床を作成
+            // (Constructor) Mesh( geometry : BufferGeometry, material : Material ) : Object3D
+            // (Constructor) PlaneGeometry(width : Float, height : Float, widthSegments : Integer, heightSegments : Integer) : BufferGeometry
+            // (Constructor) ShadowMaterial( parameters : Object ) : Material
+            const GROUND_MESH = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 1, 1), new THREE.ShadowMaterial({ opacity: 0.25 }));
+            // メッシュを90度回転し、X-Y平面からX-Z平面にする
+            // (Property) .geometry : BufferGeometry
+            // (Method) .rotateX ( radians : Float ) : BufferGeometry
+            GROUND_MESH.geometry.rotateX(-90 * Math.PI / 180);
+            // (Property) .receiveShadow : Boolean
+            GROUND_MESH.receiveShadow = true;
+            scene.add(GROUND_MESH);
+            // 床にグリッドを描画
+            // (Constructor) GridHelper( size : number, divisions : Number, colorCenterLine : Color, colorGrid : Color ) : Object3D -> Line
+            scene.add(new THREE.GridHelper(5, 20, 0x000000, 0x999999));
+            // X軸(赤)、Y軸(緑)、Z軸(青)の描画
+            // (Constructor) AxesHelper( size : Number ) : Object3D -> Line -> LineSegments
+            scene.add(new THREE.AxesHelper(4));
+        }
+        //-----------------------------------------------------------------------------------------------
+        // (2) MMD 3Dモデルをロードし、シーンに追加
+        //-----------------------------------------------------------------------------------------------
+        function loadMMD() {
+
+
+            // インスタンスの作成
+            // (Constructor) MMDLoader( manager : LoadingManager ) : Loader
+            const LOADER = new MMDLoader();
+            // .pmd / .pmx ファイルの読込
+            // .load ( url : String, onLoad : Function, onProgress : Function, onError : Function ) : null
+            var modelval = getRandomInt(0, modelpath.length - 1);
+            var selectmodelpath = modelpath[modelval];
+            document.querySelector('title').textContent = selectmodelpath.replace('./3Dモデル/', '');
+            LOADER.load(
+                // ロードする PMD/PMX ファイル
+                selectmodelpath,
+                function (mmd) {
+                    // MMD 3Dモデルのメッシュを作成
+                    mesh = mmd;
+                    for (let i = 0; i < mesh.material.length; i++) {
+                        // MMD 3Dモデルの明るさを調整する
+                        // (Property) .emissive : Color
+                        // (Method) .multiplyScalar ( s : Number ) : Color
+                        mesh.material[i].emissive.multiplyScalar(0.3);
+                        // OutlineEffectの輪郭線の太さを調整する
+                        // (Property) .userData : Object
+                        mesh.material[i].userData.outlineParameters.thickness = 0.001;
+                    }
+                    // MMD 3Dモデルの影を描画する
+                    // (Property) .castShadow : Boolean
+                    mesh.castShadow = true;
+                    // MMD 3Dモデルに影を描画する
+                    // (Property) .receiveShadow : Boolean
+                    mesh.receiveShadow = true;
+                    // 倍率を適用する。
+                    // three.js では、1単位は1メートル（1 unit = 1 meter）となるので、 
+                    // ニコニ立体ちゃん(アリシア・ソリッド)の場合、0.071倍して身長148 cmに相当する大きさにする。
+                    //フィッシュル基準の高さにした
+                    // (Property) .scale : Vector3
+                    // (Method) .copy ( v : Vector3 ) : this
+                    mesh.scale.copy(new THREE.Vector3(1, 1, 1).multiplyScalar(0.25)); //0.086
+                    // モデルの高さ情報を取得するため、バウンディングボックスを作成
+                    // (Constructor) Box3( min : Vector3, max : Vector3 ) : Box3
+                    const BOUNDING_BOX = new THREE.Box3().setFromObject(mesh);
+                    // カメラの位置を設定
+                    // (Property) .position : Vector3
+                    // (Method) .copy ( v : Vector3 ) : this
+                    //縮尺調整
+                    charactercenter = (BOUNDING_BOX.max.y + BOUNDING_BOX.min.y) / 2;
+                    var height = charactercenter * 2 * 100;
+                    camera.position.copy(new THREE.Vector3(0, charactercenter, (0.03 * height) - 0.37));
+                    // 視点を設定する
+                    // (Property) .target : Vector3
+                    controls.target = new THREE.Vector3(0, charactercenter, 0);
+                    // スポットライト光源のターゲットの位置を設定
+                    // (Property) .target : Object3D
+                    // (Property) .position : Vector3
+                    // (Method) .copy ( v : Vector3 ) : this
+                    light.target.position.copy(new THREE.Vector3(0, charactercenter, 0));
+                    for (let i = 0; i < VMD_FILES.length; i++) {
+                        LOADER.loadAnimation(VMD_FILES[i].file, mesh, function (motion) {
+                            // モーションファイルはAnimationClipとして読み込まれる、配列に保存
+                            motions[i] = motion;
+                            // AnimationClipのnameプロパティーの設定
+                            motions[i].name = VMD_FILES[i].name;
+                        });
+                    }
+                    if (true) {
+                        // (Constructor) MMDAnimationHelper( params : Object )
+                        // (Method) .add ( object : Object3D, params : Object ) : MMDAnimationHelper
+                        ANIMATION_HELPER.add(mesh, { animation: motions, physics: true });
+                    } else {
+                        ANIMATION_HELPER.add(mesh, { animation: motions, physics: false });
+                    }
+                    // 再生、停止、一時停止を制御するための AnimationMixer を取得
+                    // (Property) .objects : WeakMap
+                    animationMixer = ANIMATION_HELPER.objects.get(mesh).mixer;
+                    // AnimationHelperにより開始したモーションを停止する
+                    // (Method) .stopAllAction () : AnimationMixer
+                    animationMixer.stopAllAction();
+                    // メッシュをシーンに追加
+                    // (Method) .add ( object : Object3D, ... ) : this
+                    scene.add(mesh);
+                }
+            );
+        }
+        //-----------------------------------------------------------------------------------------------
+        // (3)レンダリング (レンダリングループ)
+        //-----------------------------------------------------------------------------------------------
+        let fps = 120; // 目標のFPS
+        let now;
+        let then = Date.now();
+        let interval = 1000 / fps;
+        let delta;
+        function sceneRender() {
+            // (Constructor) window.requestAnimationFrame( callback )
+            window.requestAnimationFrame(sceneRender);
+
+
+            now = Date.now();
+            delta = now - then;
+
+            if (delta > interval) {
+                then = now - (delta % interval);
+                // ここにアニメーションを実行するコードを書く
+                stats.begin();
+
+                if (motionIndex !== -1) {
+                    // (Method) .update ( delta : Number ) : MMDAnimationHelper
+                    ANIMATION_HELPER.update(CLOCK.getDelta());
+                }
+                // OutlineEffectの適用
+                // (Method) .render ( scene : Object3D, camera : Camera ) : null
+                effect.render(scene, camera);
+
+                stats.end();
+            }
+
+
+
+        }
+        //***********************************************************************************************
+        // イベント
+        //***********************************************************************************************
+        //-----------------------------------------------------------------------------------------------
+        // ブラウザー（ウィンドウ）のサイズ変更時の処理
+        //-----------------------------------------------------------------------------------------------
+        window.addEventListener('resize', function () {
+            // レスポンシブル対応
+            // (Method) .setSize ( width : Integer, height : Integer, updateStyle : Boolean ) : null
+            effect.setSize(parseInt(window.getComputedStyle(document.getElementById('webgl')).height) * 16 / 9, parseInt(window.getComputedStyle(document.getElementById('webgl')).height))
+        }, false);
+
+        const canvas = document.querySelector('body');
+        const audioElement = document.querySelector("audio");
+        //1度だけ実行
+        canvas.addEventListener("mouseenter", function (event) {
+            console.log('audio')
+            //audioElement.play();
+
+        }, false);
+
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+        }
+
+        /// FPSを画面右下に表示する
+        var stats = new Stats();
+        stats.showPanel(0);
+        Object.assign(stats.dom.style, {
+            'position': 'fixed',
+            'height': 'max-content',
+            'left': 'auto',
+            'right': 0,
+            'top': 'auto',
+            'bottom': '0'
+        });
+        document.body.appendChild(stats.dom);
+
+        //ロードアニメーション
+        //テキストのカウントアップ+バーの設定
+        var bar = new ProgressBar.Line(splash_text, {//id名を指定
+            easing: 'easeInOut',//アニメーション効果linear、easeIn、easeOut、easeInOutが指定可能
+            duration: timephysics - 450,//時間指定(1000＝1秒)
+            strokeWidth: 0.2,//進捗ゲージの太さ
+            color: '#555',//進捗ゲージのカラー
+            trailWidth: 0.2,//ゲージベースの線の太さ
+            trailColor: '#bbb',//ゲージベースの線のカラー
+            text: {//テキストの形状を直接指定				
+                style: {//天地中央に配置
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    padding: '0',
+                    margin: '-30px 0 0 0',//バーより上に配置
+                    transform: 'translate(-50%,-50%)',
+                    'font-size': '1rem',
+                    color: '#fff',
+                },
+                autoStyleContainer: false //自動付与のスタイルを切る
+            },
+            step: function (state, bar) {
+                bar.setText('物理演算読み込み中 ' + Math.round(bar.value() * 100) + ' %'); //テキストの数値
+            }
+        });
+
+        //アニメーションスタート
+        bar.animate(1.0, function () {//バーを描画する割合を指定します 1.0 なら100%まで描画します
+            $("#splash").delay(0).fadeOut(400);//アニメーションが終わったら#splashエリアをフェードアウト
+        });  
+    </script>
+</body>
+
+</html>
