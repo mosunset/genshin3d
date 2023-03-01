@@ -29,8 +29,12 @@
             position: relative;
         }
 
+        webgl{
+            overflow: visible;
+        }
         canvas {
-            margin: 0 0 auto;
+            margin: 0 auto;
+            overflow: visible;
         }
 
         /*========= LoadingのためのCSS ===============*/
@@ -186,7 +190,7 @@
         var charactercenter;
         // WebGLを表示するcanvas要素のサイズ
         // レスポンシブル対応 div要素の幅を取得（960px）し、数値（960）のみを取り出す
-        let canvasSizeW = parseInt(window.getComputedStyle(document.getElementById('webgl')).height) * 3 / 4;
+        let canvasSizeW = parseInt(window.getComputedStyle(document.getElementById('webgl')).height)*3/4;
         let canvasSizeH = parseInt(window.getComputedStyle(document.getElementById('webgl')).height);     //16:9の場合9/16　4:3の場合3/4
         //***********************************************************************************************
         // メインプログラム
@@ -326,7 +330,7 @@
             scene.add(GROUND_MESH);
             // 床にグリッドを描画
             // (Constructor) GridHelper( size : number, divisions : Number, colorCenterLine : Color, colorGrid : Color ) : Object3D -> Line
-            scene.add(new THREE.GridHelper(5, 20, 0x000000, 0x999999));
+            scene.add(new THREE.GridHelper(20, 40, 0x000000, 0x999999));
             // X軸(赤)、Y軸(緑)、Z軸(青)の描画
             // (Constructor) AxesHelper( size : Number ) : Object3D -> Line -> LineSegments
             scene.add(new THREE.AxesHelper(4));
@@ -421,7 +425,7 @@
         //-----------------------------------------------------------------------------------------------
         // (3)レンダリング (レンダリングループ)
         //-----------------------------------------------------------------------------------------------
-        let fps = 120; // 目標のFPS
+        let fps = 30; // 目標のFPS
         let now;
         let then = Date.now();
         let interval = 1000 / fps;
@@ -462,7 +466,7 @@
         window.addEventListener('resize', function () {
             // レスポンシブル対応
             // (Method) .setSize ( width : Integer, height : Integer, updateStyle : Boolean ) : null
-            effect.setSize(parseInt(window.getComputedStyle(document.getElementById('webgl')).height) * 16 / 9, parseInt(window.getComputedStyle(document.getElementById('webgl')).height))
+            effect.setSize(parseInt(window.getComputedStyle(document.getElementById('webgl')).height)*3/4, parseInt(window.getComputedStyle(document.getElementById('webgl')).height))
         }, false);
 
         const canvas = document.querySelector('body');
