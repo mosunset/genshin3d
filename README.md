@@ -3,3 +3,5 @@
 ページの構成要素をコミットしたあと<br>
 `Setting` -> `Pages` に移動<br>
 `Branch` の項目を `main` に変更<br>
+
+https://mosunset.github.io/genshin3d
