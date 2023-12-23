@@ -11,7 +11,7 @@ import zipfile
 
 model_dir = './model'
 # モデルディレクトリを削除
-# shutil.rmtree(model_dir)
+#shutil.rmtree(model_dir)
 
 with open('url.csv', 'r', encoding='utf-8') as file:
     reader = csv.reader(file)
@@ -26,7 +26,7 @@ with open('url.csv', 'r', encoding='utf-8') as file:
             print(name)
             # name_dir = os.path.join(version_dir, name)
             # os.makedirs(name_dir, exist_ok=True)
-        
+
         # ブラウザを開く
         driver = webdriver.Chrome()
         driver.maximize_window()
@@ -52,14 +52,16 @@ with open('url.csv', 'r', encoding='utf-8') as file:
                         writer.writerow([href])
                     urls.add(href)
 
+        for href in urls:
+            # ファイルをダウンロード
+            file_name = href.split('/')[-1]
+            urllib.request.urlretrieve(href, os.path.join(version_dir, file_name))
+
         urls.clear()
         # ブラウザを閉じる
         driver.quit()
-        
-for href in urls:
-    # ファイルをダウンロード
-    file_name = href.split('/')[-1]
-    urllib.request.urlretrieve(href, os.path.join(version_dir, file_name))
+
+
 
 # model_dir がモデルディレクトリへのパスであると仮定します
 # モデルディレクトリ内のファイルを走査し、zip または rar ファイルを見つけたら解凍します
