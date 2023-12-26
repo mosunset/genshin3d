@@ -269,10 +269,10 @@
             // ライト(環境光)を作成し、シーンに追加
             // (Method) .add ( object : Object3D, ... ) : this
             // (Constructor) AmbientLight( color : Integer, intensity : Float ) : Object3D -> Light
-            scene.add(new THREE.AmbientLight(0xfff4fc, 0.7));
+            scene.add(new THREE.AmbientLight(0xfff4fc, 1.5));
             // ライト(平行光源)を作成
             // (Constructor)  DirectionalLight( color : Integer, intensity : Float ) : Object3D -> Light
-            light = new THREE.DirectionalLight(0xffe0ed, 0.4);
+            light = new THREE.DirectionalLight(0xefe0ed, 1.78);
             // ライト(平行光源)による動的シャドウを描画の設定
             // (Property) .castShadow : Boolean
             light.castShadow = true;
@@ -287,7 +287,7 @@
             // ライト(スポットライト光源)によるシャドウの解像度
             // (Property) .shadow : SpotLightShadow
             // (Property) .focus : Number
-            light.shadow.focus = 1;
+            light.shadow.focus = 0.8;
             // Shadow Mapのoffsetバイアスの設定、Shadow Acneを減らすことができる。
             // (Property) .normalBias : Float
             light.shadow.normalBias = 0.02;
@@ -298,15 +298,15 @@
             // (Property) .shadow : SpotLightShadow
             // (Property) .camera : Camera
             // (Property) .left : Float
-            light.shadow.camera.left = -5;
+            light.shadow.camera.left = -50;
             // (Property) .right : Float
-            light.shadow.camera.right = 5;
+            light.shadow.camera.right = 50;
             // (Property) .top : Float
-            light.shadow.camera.top = 5;
+            light.shadow.camera.top = 50;
             // (Property) .bottom : Float
-            light.shadow.camera.bottom = -5;
+            light.shadow.camera.bottom = -50;
             // (Property) .near : Float
-            light.shadow.camera.near = 0.1;
+            light.shadow.camera.near = 10.0;
             // (Property) .far : Float
             light.shadow.camera.far = 20;
             // ライト(平行光源)をシーンに追加
@@ -328,7 +328,7 @@
             // (Constructor) Mesh( geometry : BufferGeometry, material : Material ) : Object3D
             // (Constructor) PlaneGeometry(width : Float, height : Float, widthSegments : Integer, heightSegments : Integer) : BufferGeometry
             // (Constructor) ShadowMaterial( parameters : Object ) : Material
-            const GROUND_MESH = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 1, 1), new THREE.ShadowMaterial({ opacity: 0.25 }));
+            const GROUND_MESH = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 1, 1), new THREE.ShadowMaterial({ opacity: 0.0 }));
             // メッシュを90度回転し、X-Y平面からX-Z平面にする
             // (Property) .geometry : BufferGeometry
             // (Method) .rotateX ( radians : Float ) : BufferGeometry
@@ -338,10 +338,10 @@
             scene.add(GROUND_MESH);
             // 床にグリッドを描画
             // (Constructor) GridHelper( size : number, divisions : Number, colorCenterLine : Color, colorGrid : Color ) : Object3D -> Line
-            scene.add(new THREE.GridHelper(20, 40, 0x000000, 0x999999));
+            //scene.add(new THREE.GridHelper(20, 40, 0xaaaaaa, 0x999999));
             // X軸(赤)、Y軸(緑)、Z軸(青)の描画
             // (Constructor) AxesHelper( size : Number ) : Object3D -> Line -> LineSegments
-            scene.add(new THREE.AxesHelper(4));
+            //scene.add(new THREE.AxesHelper(4));
         }
         //-----------------------------------------------------------------------------------------------
         // (2) MMD 3Dモデルをロードし、シーンに追加
@@ -386,7 +386,7 @@
                     // (Property) .receiveShadow : Boolean
                     mesh.receiveShadow = true;
                     // 倍率を適用する。
-                    // three.js では、1単位は1メートル（1 unit = 1 meter）となるので、 
+                    // three.js では、1単位は1メートル（1 unit = 1 meter）となるので、
                     // ニコニ立体ちゃん(アリシア・ソリッド)の場合、0.071倍して身長148 cmに相当する大きさにする。
                     //フィッシュル基準の高さにした
                     // (Property) .scale : Vector3
@@ -514,7 +514,7 @@
             color: '#555',//進捗ゲージのカラー
             trailWidth: 0.2,//ゲージベースの線の太さ
             trailColor: '#bbb',//ゲージベースの線のカラー
-            text: {//テキストの形状を直接指定				
+            text: {//テキストの形状を直接指定
                 style: {//天地中央に配置
                     position: 'absolute',
                     left: '50%',
@@ -542,10 +542,11 @@
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
 
+
         //アニメーションスタート
         bar.animate(1.0, function () {//バーを描画する割合を指定します 1.0 なら100%まで描画します
             $("#splash").delay(0).fadeOut(400);//アニメーションが終わったら#splashエリアをフェードアウト
-        });  
+        });
     </script>
 </body>
 
